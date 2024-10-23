@@ -70,4 +70,7 @@ a, b, islinear = Symbolics.linear_expansion(D(x) - x, x)
     @test islin && isequal(a, 2) && isequal(b, 0)
     a, b, islin = linear_expansion(y[1], x[1])
     @test islin && isequal(a, 0) && isequal(b, y[1])
+    @test !linear_expansion(z([x...]), x[1])[3]
+    @test !linear_expansion(z(collect(unwrap(x))), x[1])[3]
+    @test !linear_expansion(z([x, 2x]), x[1])[3]
 end

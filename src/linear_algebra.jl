@@ -338,10 +338,31 @@ function _linear_expansion(t, x)
     else
         for (i, arg) in enumerate(args)
             isequal(arg, arrx) && return (0, 0, false)
+            if symbolic_type(arg) == NotSymbolic()
+                arg isa AbstractArray || continue
+                _occursin_array(x, arrx, arg) && return (0, 0, false)
+                continue
+            end
             a, b, islinear = linear_expansion(arg, x)
             (_iszero(a) && islinear) || return (0, 0, false)
         end
         return (0, t, true)
+    end
+end
+
+"""
+    _occursin_array(sym, arrsym, arr)
+
+Check if `sym` (or, if `sym` is an element of an array symbolic, the array symbolic
+`arrsym`) occursin in the non-symbolic array `arr`.
+"""
+function _occursin_array(sym, arrsym, arr)
+    for el in arr
+        if symbolic_type(el) == NotSymbolic()
+            return el isa AbstractArray && _occursin_array(sym, arrsym, el)
+        else
+            return occursin(sym, el) || occursin(arrsym, el)
+        end
     end
 end
 
