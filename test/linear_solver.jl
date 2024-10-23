@@ -59,3 +59,15 @@ a, b, islinear = Symbolics.linear_expansion(D(x) - x, x)
 @test islinear
 @test isequal(a, -1)
 @test isequal(b, D(x))
+
+@testset "linear_expansion with array variables" begin
+    @variables x[1:2] y[1:2] z(..)
+    @test !linear_expansion(z(x) + x[1], x[1])[3]
+    @test !linear_expansion(z(x[1]) + x[1], x[1])[3]
+    a, b, islin = linear_expansion(z(x[2]) + x[1], x[1])
+    @test islin && isequal(a, 1) && isequal(b, z(x[2]))
+    a, b, islin = linear_expansion((x + x)[1], x[1])
+    @test islin && isequal(a, 2) && isequal(b, 0)
+    a, b, islin = linear_expansion(y[1], x[1])
+    @test islin && isequal(a, 0) && isequal(b, y[1])
+end

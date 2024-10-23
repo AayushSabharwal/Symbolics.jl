@@ -276,6 +276,13 @@ function _linear_expansion(t, x)
     op, args = operation(t), arguments(t)
     expansion_check(op)
 
+    if iscall(x) && operation(x) == getindex
+        arrx, idxsx... = arguments(x)
+    else
+        arrx = nothing
+        idxsx = nothing
+    end
+
     if op === (+)
         a₁ = b₁ = 0
         islinear = true
@@ -318,8 +325,19 @@ function _linear_expansion(t, x)
         a₁, b₁, islinear = linear_expansion(args[1], x)
         # (a₁ x + b₁)/b₂
         return islinear ? (a₁ / b₂, b₁ / b₂, islinear) : (0, 0, false)
+    elseif op === getindex
+        arrt, idxst... = arguments(t)
+        isequal(arrt, arrx) && return (0, t, true)
+
+        indexed_t = Symbolics.scalarize(arrt)[idxst...]
+        # when indexing a registered function/callable symbolic
+        # scalarizing and indexing leads to the same symbolic variable
+        # which causes a StackOverflowError without this
+        isequal(t, indexed_t) && return (0, t, true)
+        return linear_expansion(Symbolics.scalarize(arrt)[idxst...], x)
     else
         for (i, arg) in enumerate(args)
+            isequal(arg, arrx) && return (0, 0, false)
             a, b, islinear = linear_expansion(arg, x)
             (_iszero(a) && islinear) || return (0, 0, false)
         end
